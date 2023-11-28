@@ -8,17 +8,31 @@
 import UIKit
 
 class TaskListTableViewController: UITableViewController {
+    
+    // хранилище задач
+    var tasksStorage: TasksStorageProtocol = TasksStorage() // коллекция задач
+    var tasks: [TaskPriority:[TaskProtocol]] = [:]
+    // порядок отображения секций по типам
+    // индекс в массиве соответствует индексу секции в таблице
+    var sectionsTypesPosition: [TaskPriority] = [.important, .normal]
 
     override func viewDidLoad() {
         super.viewDidLoad()
-
-        // Uncomment the following line to preserve selection between presentations
-        // self.clearsSelectionOnViewWillAppear = false
-
-        // Uncomment the following line to display an Edit button in the navigation bar for this view controller.
-        // self.navigationItem.rightBarButtonItem = self.editButtonItem
+        loadTasks()
     }
-
+    
+    private func loadTasks() {
+        // подготовка коллекции с задачами
+        // будем использовать только те задачи, для которых определена секция в таблице
+        sectionsTypesPosition.forEach { taskType in tasks[taskType] = []
+        }
+        // загрузка и разбор задач из хранилища
+        tasksStorage.loadTasks().forEach { task in
+            tasks[task.priority]?.append(task)
+        }
+    }
+    
+    
     // MARK: - Table view data source
 
     override func numberOfSections(in tableView: UITableView) -> Int {
