@@ -5,7 +5,7 @@
 //  Created by Amor on 28.11.2023.
 //
 
-import UIKit
+import Foundation
 
 enum TaskPriority {
     case normal

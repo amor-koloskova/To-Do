@@ -5,7 +5,7 @@
 //  Created by Amor on 28.11.2023.
 //
 
-import UIKit
+import Foundation
 
 protocol TasksStorageProtocol {
     func loadTasks() -> [TaskProtocol]
@@ -13,19 +13,45 @@ protocol TasksStorageProtocol {
 }
 
 class TasksStorage: TasksStorageProtocol {
-    func loadTasks() -> [TaskProtocol] {
-        let testTasks: [TaskProtocol] = [
-            Task(title: "Купить хлеб", priority: .normal, status: .planned), Task(title: "Помыть кота", priority: .important, status: .planned), Task(title: "Отдать долг Арнольду", priority: .important, status:
-            .completed),
-            Task(title: "Купить новый пылесос", priority: .normal, status:
-            .completed),
-            Task(title: "Подарить цветы супруге", priority: .important, status:
-            .planned),
-            Task(title: "Позвонить родителям", priority: .important, status: .planned),
-            Task(title: "Пригласить на вечеринку Дольфа, Джеки, Леонардо, Уилла и Брюса", priority: .important, status: .planned)
-        ]
-            return testTasks
+    // Ссылка на хранилище
+    private var storage = UserDefaults.standard
+    
+    // Ключ, по которому будет происходит сохранение и загрузка хранилища из UserDefaults
+    var storageKey: String = "tasks"
+    
+    //Перечисление с ключами для записи в UserDefaults
+    
+    private enum TaskKey: String {
+        case title
+        case priority
+        case status
     }
     
-    func saveTasks(_ tasks: [TaskProtocol]) {}
+    func loadTasks() -> [TaskProtocol] {
+        var resultTasks: [TaskProtocol] = []
+        let tasksFromStorage = storage.array(forKey: storageKey) as? [[String:String]] ?? []
+        for task in tasksFromStorage {
+            guard let title = task[TaskKey.title.rawValue],
+                  let priorityRaw = task[TaskKey.priority.rawValue],
+                  let statusRaw = task[TaskKey.status.rawValue] else {
+                continue
+            }
+            let priority: TaskPriority = (priorityRaw == "important") ? .important : .normal
+            let status: TaskStatus = (statusRaw == "planned") ? .planned : .completed
+            resultTasks.append(Task(title: title, priority: priority, status: status))
+        }
+        return resultTasks
+    }
+    
+    func saveTasks(_ tasks: [TaskProtocol]) {
+        var arrayForStorage: [[String:String]] = []
+        tasks.forEach { task in
+            var newElementForStorage: Dictionary<String,String> = [:]
+            newElementForStorage[TaskKey.title.rawValue] = task.title
+            newElementForStorage[TaskKey.priority.rawValue] = (task.priority == .important) ? "important" : "normal"
+            newElementForStorage[TaskKey.status.rawValue] = (task.status == .planned) ? "planned" : "completed"
+            arrayForStorage.append(newElementForStorage)
+        }
+        storage.set(arrayForStorage, forKey: storageKey)
+    }
 }
