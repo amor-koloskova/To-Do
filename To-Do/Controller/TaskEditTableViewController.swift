@@ -67,6 +67,12 @@ class TaskEditTableViewController: UITableViewController {
         return 3
     }
     
+    // Снятие выделения со строки после нажатия
+    override func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
+        tableView.deselectRow(at: indexPath, animated: true)
+        return
+    }
+    
     // MARK: - Navigation
     
     // Переход к экрану выбора приоритета задачи

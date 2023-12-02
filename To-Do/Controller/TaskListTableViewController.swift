@@ -38,11 +38,22 @@ class TaskListTableViewController: UITableViewController {
     var tasksStatusPosition: [TaskStatus] = [.planned, .completed]
     
     // MARK: - Life Cycle
-    
     override func viewDidLoad() {
         super.viewDidLoad()
         // кнопка активации режима редактирования
         navigationItem.leftBarButtonItem = editButtonItem
+    }
+    
+    override func viewWillAppear(_ animated: Bool) {
+        super.viewWillAppear(animated)
+        print("appear")
+        let tasksTasks: Array = Array(tasks.values)
+        if tasksTasks[0].isEmpty && tasksTasks[1].isEmpty {
+            navigationItem.leftBarButtonItem!.isHidden = true
+            print("if")
+            print(tasks)
+            print(tasksTasks)
+        }
     }
     
     // MARK: - Internal  Methods
@@ -106,20 +117,31 @@ class TaskListTableViewController: UITableViewController {
         let cell = tableView.dequeueReusableCell(withIdentifier: "taskCellStack", for: indexPath) as! TaskCellTableViewCell
         // получаем данные о задаче, которые необходимо вывести в ячейке
         let taskType = sectionsTypesPosition[indexPath.section]
-        guard let currentTask = tasks[taskType]?[indexPath.row] else {
+        guard let currentType = tasks[taskType] else {
             return cell
         }
-        // изменяем текст в ячейке
-        cell.title.text = currentTask.title
-        // изменяем символ в ячейке
-        cell.symbol.text = getSymbolForTask(with: currentTask.status)
-        // изменяем цвет текста
-        if currentTask.status == .planned {
-            cell.title.textColor = .black
-            cell.symbol.textColor = .black } else {
+        if currentType.isEmpty {
+            cell.title.text = "Задачи отсутствуют"
+            cell.symbol.text = ""
+            cell.title.textColor = .systemGray
+            cell.symbol.textColor = .systemGray
+        } else {
+            guard let currentTask = tasks[taskType]?[indexPath.row] else {
+                return cell
+            }
+            // изменяем текст в ячейке
+            cell.title.text = currentTask.title
+            // изменяем символ в ячейке
+            cell.symbol.text = getSymbolForTask(with: currentTask.status)
+            // изменяем цвет текста
+            if currentTask.status == .planned {
+                cell.title.textColor = .black
+                cell.symbol.textColor = .black
+            } else {
                 cell.title.textColor = .lightGray
                 cell.symbol.textColor = .lightGray
             }
+        }
         return cell
     }
     
@@ -148,9 +170,15 @@ class TaskListTableViewController: UITableViewController {
         // определяем приоритет задач, соответствующий текущей секции
         let taskPriority = sectionsTypesPosition[section]
         guard let currentTasksType = tasks[taskPriority] else {
-            return 0
+            return 1
         }
-        return currentTasksType.count
+        if currentTasksType.isEmpty {
+            print("jiu")
+            print(tasks[taskPriority] as Any)
+            return 1
+        } else {
+            return currentTasksType.count
+        }
     }
 
     // Ячейка для строки таблицы
@@ -170,22 +198,43 @@ class TaskListTableViewController: UITableViewController {
         return title
     }
     
+    override func tableView(_ tableView: UITableView, canEditRowAt indexPath: IndexPath) -> Bool {
+        let taskType = sectionsTypesPosition[indexPath.section]
+        var isRowEditing = true
+        guard let currentType = tasks[taskType] else {
+            return false
+        }
+        if currentType.isEmpty {
+            isRowEditing = false
+        }
+        return isRowEditing
+    }
+    
     // Настройка действий при нажатии на строку
     override func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
         // 1. Проверяем существование задачи
-        let taskType = sectionsTypesPosition[indexPath.section] 
-        guard let _ = tasks[taskType]?[indexPath.row] else {
-            return }
-        // 2. Убеждаемся, что задача не является выполненной
-        guard tasks[taskType]![indexPath.row].status == .planned else {
-            // снимаем выделение со строки
-            tableView.deselectRow(at: indexPath, animated: true)
+        let taskType = sectionsTypesPosition[indexPath.section]
+        guard let currentType = tasks[taskType] else {
             return
         }
-        // 3. Отмечаем задачу как выполненную
-        tasks[taskType]![indexPath.row].status = .completed
-        // 4. Перезагружаем секцию таблицы
-        tableView.reloadSections(IndexSet(arrayLiteral: indexPath.section),with: .automatic)
+        if currentType.isEmpty {
+            tableView.deselectRow(at: indexPath, animated: true)
+            return
+        } else {
+            guard let _ = tasks[taskType]?[indexPath.row] else {
+                return
+            }
+            // 2. Убеждаемся, что задача не является выполненной
+            guard tasks[taskType]![indexPath.row].status == .planned else {
+                // снимаем выделение со строки
+                tableView.deselectRow(at: indexPath, animated: true)
+                return
+            }
+            // 3. Отмечаем задачу как выполненную
+            tasks[taskType]![indexPath.row].status = .completed
+            // 4. Перезагружаем секцию таблицы
+            tableView.reloadSections(IndexSet(arrayLiteral: indexPath.section),with: .automatic)
+        }
     }
     
     // Настройка свайпа вправо
@@ -237,10 +286,11 @@ class TaskListTableViewController: UITableViewController {
     // Удаление задач
     override func tableView(_ tableView: UITableView, commit editingStyle: UITableViewCell.EditingStyle, forRowAt indexPath: IndexPath) {
         let taskType = sectionsTypesPosition[indexPath.section]
-        // удаляем задачу
-        tasks[taskType]?.remove(at: indexPath.row)
-        // удаляем строку, соответствующую задаче
-        tableView.deleteRows(at: [indexPath], with: .automatic)
+            // удаляем задачу
+            tasks[taskType]?.remove(at: indexPath.row)
+            // удаляем строку, соответствующую задаче
+            tableView.deleteRows(at: [indexPath], with: .automatic)
+        tableView.reloadData()
     }
     
     // Ручная сортировка списка задач
