@@ -24,7 +24,17 @@ class TaskEditTableViewController: UITableViewController {
     
     // MARK: - UI Elements
     
-    @IBOutlet var taskTitle: UITextField!
+    @IBOutlet var taskTitle: UITextField! //{
+//        didSet {
+//            if taskTitle.text != "" {
+//                return
+//            } else {
+//                let alert = UIAlertController(title: "Ошибка", message: "Задача должна иметь название", preferredStyle: .alert)
+//                alert.addAction(UIAlertAction(title: "Попробовать снова", style: .default, handler: nil))
+//                self.present(alert, animated: true, completion: nil)
+//            }
+//        }
+//    }
     @IBOutlet var taskPriorityLabel: UILabel!
     @IBOutlet var taskStatusSwitch: UISwitch!
     
@@ -35,9 +45,17 @@ class TaskEditTableViewController: UITableViewController {
         let priority = taskPriority
         let status: TaskStatus = taskStatusSwitch.isOn ?
             .completed : .planned
-        doAfterEdit?(title, priority, status)
-        navigationController?.popViewController(animated: true)
-        
+        // Убираем пробелы из названия
+        let trimmedTitle = title.trimmingCharacters(in: .whitespaces)
+        // Проверяем, есть ли название задачи
+        if trimmedTitle == "" {
+            let alert = UIAlertController(title: "Ошибка", message: "Задача должна иметь название", preferredStyle: .alert)
+            alert.addAction(UIAlertAction(title: "Попробовать снова", style: .default, handler: nil))
+            self.present(alert, animated: true, completion: nil)
+        } else {
+            doAfterEdit?(trimmedTitle, priority, status)
+            navigationController?.popViewController(animated: true)
+        }
     }
     
     // MARK: - Life Cycle

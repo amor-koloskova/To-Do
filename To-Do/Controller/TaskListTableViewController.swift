@@ -26,7 +26,7 @@ class TaskListTableViewController: UITableViewController {
                 //сохранение задач
                 var savingArray: [TaskProtocol] = []
                 tasks.forEach { _, value in
-                savingArray += value
+                    savingArray += value
                 }
                 tasksStorage.saveTasks(savingArray)
             }
@@ -46,13 +46,12 @@ class TaskListTableViewController: UITableViewController {
     
     override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(animated)
-        print("appear")
         let tasksTasks: Array = Array(tasks.values)
+        navigationItem.leftBarButtonItem = editButtonItem
         if tasksTasks[0].isEmpty && tasksTasks[1].isEmpty {
             navigationItem.leftBarButtonItem!.isHidden = true
-            print("if")
-            print(tasks)
-            print(tasksTasks)
+        } else {
+            navigationItem.leftBarButtonItem?.isHidden = false
         }
     }
     
@@ -82,35 +81,35 @@ class TaskListTableViewController: UITableViewController {
             tasks[task.priority]?.append(task)
         }
     }
-    
-    // ячейка на основе ограничений
-    private func getConfiguredTaskCell_constraints(for indexPath: IndexPath) -> UITableViewCell {
-        // загружаем прототип ячейки по идентификатору
-        let cell = tableView.dequeueReusableCell(withIdentifier: "taskCellConstraints", for: indexPath)
-        // получаем данные о задаче, которую необходимо вывести в ячейке
-        let taskType = sectionsTypesPosition[indexPath.section]
-        guard let currentTask = tasks[taskType]?[indexPath.row] else {
-            return cell
-        }
-        // текстовая метка символа
-        let symbolLabel = cell.viewWithTag(1) as? UILabel
-        // текстовая метка названия задачи
-        let textLabel = cell.viewWithTag(2) as? UILabel
-        
-        // изменяем символ в ячейке
-        symbolLabel?.text = getSymbolForTask(with: currentTask.status)
-        // изменяем текст в ячейке
-        textLabel?.text = currentTask.title
-        // изменяем цвет текста и символа
-        if currentTask.status == .planned {
-            textLabel?.textColor = .black
-            symbolLabel?.textColor = .black
-        } else {
-            textLabel?.textColor = .lightGray
-            symbolLabel?.textColor = .lightGray
-        }
-        return cell
-    }
+//    
+//    // ячейка на основе ограничений
+//    private func getConfiguredTaskCell_constraints(for indexPath: IndexPath) -> UITableViewCell {
+//        // загружаем прототип ячейки по идентификатору
+//        let cell = tableView.dequeueReusableCell(withIdentifier: "taskCellConstraints", for: indexPath)
+//        // получаем данные о задаче, которую необходимо вывести в ячейке
+//        let taskType = sectionsTypesPosition[indexPath.section]
+//        guard let currentTask = tasks[taskType]?[indexPath.row] else {
+//            return cell
+//        }
+//        // текстовая метка символа
+//        let symbolLabel = cell.viewWithTag(1) as? UILabel
+//        // текстовая метка названия задачи
+//        let textLabel = cell.viewWithTag(2) as? UILabel
+//        
+//        // изменяем символ в ячейке
+//        symbolLabel?.text = getSymbolForTask(with: currentTask.status)
+//        // изменяем текст в ячейке
+//        textLabel?.text = currentTask.title
+//        // изменяем цвет текста и символа
+//        if currentTask.status == .planned {
+//            textLabel?.textColor = .black
+//            symbolLabel?.textColor = .black
+//        } else {
+//            textLabel?.textColor = .lightGray
+//            symbolLabel?.textColor = .lightGray
+//        }
+//        return cell
+//    }
     
     private func getConfiguredTaskCell_stack(for indexPath: IndexPath) -> UITableViewCell {
         // загружаем прототип ячейки по идентификатору
@@ -170,17 +169,20 @@ class TaskListTableViewController: UITableViewController {
         // определяем приоритет задач, соответствующий текущей секции
         let taskPriority = sectionsTypesPosition[section]
         guard let currentTasksType = tasks[taskPriority] else {
-            return 1
+            return 0
         }
+        
         if currentTasksType.isEmpty {
-            print("jiu")
-            print(tasks[taskPriority] as Any)
-            return 1
+                print("empty")
+                print(currentTasksType)
+                return 1
         } else {
+            print("not empty")
+            print(currentTasksType)
             return currentTasksType.count
         }
     }
-
+    
     // Ячейка для строки таблицы
     override func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
         //return getConfiguredTaskCell_constraints(for: indexPath)
@@ -286,10 +288,10 @@ class TaskListTableViewController: UITableViewController {
     // Удаление задач
     override func tableView(_ tableView: UITableView, commit editingStyle: UITableViewCell.EditingStyle, forRowAt indexPath: IndexPath) {
         let taskType = sectionsTypesPosition[indexPath.section]
-            // удаляем задачу
-            tasks[taskType]?.remove(at: indexPath.row)
-            // удаляем строку, соответствующую задаче
-            tableView.deleteRows(at: [indexPath], with: .automatic)
+        // удаляем задачу
+        tasks[taskType]?.remove(at: indexPath.row)
+        // удаляем строку, соответствующую задаче
+        //tableView.deleteRows(at: [indexPath], with: .automatic)
         tableView.reloadData()
     }
     
@@ -301,14 +303,26 @@ class TaskListTableViewController: UITableViewController {
         let taskTypeTo = sectionsTypesPosition[destinationIndexPath.section]
         // безопасно извлекаем задачу, тем самым копируем ее
         guard let movedTask = tasks[taskTypeFrom]?[sourceIndexPath.row] else {
-            return }
-        // удаляем задачу с места, от куда она перенесена
+            return
+        }
+        guard let toSection  = tasks[taskTypeTo] else {
+            return
+        }
+
+        // удаляем задачу с места, откуда она перенесена
         tasks[taskTypeFrom]!.remove(at: sourceIndexPath.row)
-        // вставляем задачу на новую позицию
-        tasks[taskTypeTo]!.insert(movedTask, at: destinationIndexPath.row)
-        // если секция изменилась, изменяем тип задачи в соответствии с новой позицией
-        if taskTypeFrom != taskTypeTo {
-            tasks[taskTypeTo]![destinationIndexPath.row].priority = taskTypeTo
+                // вставляем задачу на новую позицию
+        if toSection.isEmpty {
+            tasks[taskTypeTo]!.insert(movedTask, at: 0)
+            if taskTypeFrom != taskTypeTo {
+                tasks[taskTypeTo]![0].priority = taskTypeTo
+            }
+        } else {
+            tasks[taskTypeTo]!.insert(movedTask, at: destinationIndexPath.row)
+            // если секция изменилась, изменяем тип задачи в соответствии с новой позицией
+            if taskTypeFrom != taskTypeTo {
+                tasks[taskTypeTo]![destinationIndexPath.row].priority = taskTypeTo
+            }
         }
         // обновляем данные
         tableView.reloadData()
