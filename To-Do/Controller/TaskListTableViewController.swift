@@ -37,11 +37,34 @@ class TaskListTableViewController: UITableViewController {
     var sectionsTypesPosition: [TaskPriority] = [.important, .normal]
     var tasksStatusPosition: [TaskStatus] = [.planned, .completed]
     
+    private lazy var themeSwitch: UISwitch = {
+            let themeSwitch = UISwitch()
+            themeSwitch.tintColor = .systemBlue
+            themeSwitch.onTintColor = .systemBlue
+            themeSwitch.thumbTintColor = .black
+    //        themeSwitch.backgroundColor = .white
+        themeSwitch.addTarget(self, action: #selector(TaskListTableViewController.changeTheme(_:)), for: .valueChanged)
+            themeSwitch.isOn = false
+            return themeSwitch
+        }()
+    
+    @objc func changeTheme(_ sender: UISwitch) {
+        if sender.isOn {
+            self.view.window?.overrideUserInterfaceStyle = .dark
+        } else {
+            self.view.window?.overrideUserInterfaceStyle = .light
+        }
+            tableView.reloadData()
+        }
+
+    
     // MARK: - Life Cycle
     override func viewDidLoad() {
         super.viewDidLoad()
+        view.backgroundColor = .systemBackground
         // кнопка активации режима редактирования
         navigationItem.leftBarButtonItem = editButtonItem
+        navigationItem.titleView = themeSwitch
     }
     
     override func viewWillAppear(_ animated: Bool) {
@@ -123,7 +146,7 @@ class TaskListTableViewController: UITableViewController {
             cell.title.text = "Задачи отсутствуют"
             cell.symbol.text = ""
             cell.title.textColor = .systemGray
-            cell.symbol.textColor = .systemGray
+            cell.symbol.textColor = .label
         } else {
             guard let currentTask = tasks[taskType]?[indexPath.row] else {
                 return cell
@@ -134,11 +157,11 @@ class TaskListTableViewController: UITableViewController {
             cell.symbol.text = getSymbolForTask(with: currentTask.status)
             // изменяем цвет текста
             if currentTask.status == .planned {
-                cell.title.textColor = .black
-                cell.symbol.textColor = .black
+                cell.title.textColor = .label
+                cell.symbol.textColor = .label
             } else {
-                cell.title.textColor = .lightGray
-                cell.symbol.textColor = .lightGray
+                cell.title.textColor = .systemGray
+                cell.symbol.textColor = .systemGray
             }
         }
         return cell

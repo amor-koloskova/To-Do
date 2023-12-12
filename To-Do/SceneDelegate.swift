@@ -35,6 +35,7 @@ class SceneDelegate: UIResponder, UIWindowSceneDelegate {
         let navigationController = UINavigationController(rootViewController: taskListController)
         
         //отображение сцен
+        window.overrideUserInterfaceStyle = .light
         self.window?.windowScene = windowScene
         window.rootViewController = navigationController
         window.makeKeyAndVisible()
